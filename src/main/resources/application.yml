@@ -2,7 +2,6 @@ server:
   port: 8084
 
 spring:
-
   datasource:
     url: jdbc:postgresql://localhost:5432/request_system
     username: postgres
@@ -20,3 +19,6 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+    table: flyway_schema_history_routing
+    baseline-on-migrate: true
+    baseline-version: 0
