@@ -4,73 +4,88 @@ import com.example.request_routing_service.DTO.ErrorResponseDto;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-  @ExceptionHandler(MethodArgumentNotValidException.class)
   @ResponseStatus(HttpStatus.BAD_REQUEST)
+  @ExceptionHandler(MethodArgumentNotValidException.class)
   public ErrorResponseDto handleMethodArgumentNotValid(
           MethodArgumentNotValidException ex,
           HttpServletRequest request
   ) {
-    return new ErrorResponseDto(
-            HttpStatus.BAD_REQUEST.value(),
-            HttpStatus.BAD_REQUEST.getReasonPhrase(),
-            formatFieldErrors(ex.getBindingResult()),
-            request.getRequestURI()
-    );
+    StringBuilder messageBuilder = new StringBuilder();
+
+    ex.getBindingResult().getFieldErrors().forEach(error -> {
+      if (!messageBuilder.isEmpty()) messageBuilder.append("; ");
+
+      messageBuilder.append(error.getField())
+              .append(": ")
+              .append(error.getDefaultMessage());
+    });
+
+    return ErrorResponseDto.builder()
+            .status(HttpStatus.BAD_REQUEST.value())
+            .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+            .message(messageBuilder.toString())
+            .path(request.getRequestURI())
+            .build();
   }
 
-  @ExceptionHandler(ConstraintViolationException.class)
   @ResponseStatus(HttpStatus.BAD_REQUEST)
+  @ExceptionHandler(ConstraintViolationException.class)
   public ErrorResponseDto handleConstraintViolation(
           ConstraintViolationException ex,
           HttpServletRequest request
   ) {
-    String message = ex.getConstraintViolations().stream()
-            .map(v -> v.getPropertyPath() + ": " + v.getMessage())
-            .collect(Collectors.joining("; "));
-    return new ErrorResponseDto(
-            HttpStatus.BAD_REQUEST.value(),
-            HttpStatus.BAD_REQUEST.getReasonPhrase(),
-            message,
-            request.getRequestURI()
-    );
+    StringBuilder messageBuilder = new StringBuilder();
+
+    ex.getConstraintViolations().forEach(error -> {
+      if (!messageBuilder.isEmpty()) messageBuilder.append("; ");
+
+      messageBuilder.append(error.getPropertyPath())
+              .append(": ")
+              .append(error.getMessage());
+    });
+
+    return ErrorResponseDto.builder()
+            .status(HttpStatus.BAD_REQUEST.value())
+            .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+            .message(messageBuilder.toString())
+            .path(request.getRequestURI())
+            .build();
   }
 
-  @ExceptionHandler(NotFoundException.class)
   @ResponseStatus(HttpStatus.NOT_FOUND)
-  public ErrorResponseDto handleNotFoundException(NotFoundException ex, HttpServletRequest request) {
-    return new ErrorResponseDto(
-            HttpStatus.NOT_FOUND.value(),
-            HttpStatus.NOT_FOUND.getReasonPhrase(),
-            ex.getMessage(),
-            request.getRequestURI()
-    );
+  @ExceptionHandler(NotFoundException.class)
+  public ErrorResponseDto handleNotFoundException(
+          NotFoundException ex,
+          HttpServletRequest request
+  ) {
+    return ErrorResponseDto.builder()
+            .status(HttpStatus.NOT_FOUND.value())
+            .error(HttpStatus.NOT_FOUND.getReasonPhrase())
+            .message(ex.getMessage())
+            .path(request.getRequestURI())
+            .build();
   }
 
-  @ExceptionHandler(IllegalArgumentException.class)
   @ResponseStatus(HttpStatus.BAD_REQUEST)
-  public ErrorResponseDto handleIllegalArgumentException(IllegalArgumentException ex, HttpServletRequest request) {
-    return new ErrorResponseDto(
-            HttpStatus.BAD_REQUEST.value(),
-            HttpStatus.BAD_REQUEST.getReasonPhrase(),
-            ex.getMessage(),
-            request.getRequestURI()
-    );
-  }
-
-  private static String formatFieldErrors(BindingResult result) {
-    return result.getFieldErrors().stream()
-            .map(err -> err.getField() + ": " + err.getDefaultMessage())
-            .collect(Collectors.joining("; "));
+  @ExceptionHandler(IllegalArgumentException.class)
+  public ErrorResponseDto handleIllegalArgumentException(
+          IllegalArgumentException ex,
+          HttpServletRequest request
+  ) {
+    return ErrorResponseDto.builder()
+            .status(HttpStatus.BAD_REQUEST.value())
+            .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+            .message(ex.getMessage())
+            .path(request.getRequestURI())
+            .build();
   }
 }

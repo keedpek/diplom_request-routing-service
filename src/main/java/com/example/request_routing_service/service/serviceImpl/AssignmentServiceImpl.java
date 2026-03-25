@@ -71,27 +71,26 @@ public class AssignmentServiceImpl implements AssignmentService {
     return strategy.assign(candidates, slaPressure).getUserId();
   }
 
-  Executor enrichWithMetrics(
+  private Executor enrichWithMetrics(
           CandidateProjection candidate,
           Map<UUID, Integer> loadMap,
           Map<UUID, Double> successMap
   ) {
-    Executor executor = new Executor();
-
-    executor.setUserId(candidate.getUserId());
-    executor.setName(candidate.getFirstName() + " " + candidate.getLastName());
-
     int workload = loadMap.getOrDefault(candidate.getUserId(), 0);
-    executor.setWorkLoad(Math.log(1 + workload));
+    Double successRate = successMap.getOrDefault(candidate.getUserId(), 0.8);
 
-    executor.setSuccessRate(successMap.getOrDefault(candidate.getUserId(), 0.8));
-    return executor;
+    return Executor.builder()
+            .userId(candidate.getUserId())
+            .name(candidate.getFirstName() + " " + candidate.getLastName())
+            .workLoad(workload)
+            .successRate(successRate)
+            .build();
   }
 
   private double calculateSlaPressure(LocalDateTime deadline, int slaTime) {
     if (deadline == null) return 0.1;
-    long minutes = Duration.between(LocalDateTime.now(), deadline).toMinutes();
-    if (minutes <= 0) return 10;
-    return (double) slaTime / minutes;
+    long minutesUntilDeadline = Duration.between(LocalDateTime.now(), deadline).toMinutes();
+    if (minutesUntilDeadline <= 0) return 10;
+    return (double) slaTime / minutesUntilDeadline;
   }
 }

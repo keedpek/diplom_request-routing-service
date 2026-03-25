@@ -22,3 +22,10 @@ spring:
     table: flyway_schema_history_routing
     baseline-on-migrate: true
     baseline-version: 0
+
+app:
+  strategies-weights:
+    weighted:
+      load-weight: 0.5
+      performance-weight: 0.3
+      sla-pressure-weight: 0.2

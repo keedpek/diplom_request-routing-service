@@ -8,21 +8,21 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+@Validated
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("api/v1/routing/assign")
-@Validated
 public class AssignmentController {
   private final AssignmentService assignmentService;
 
-  @PostMapping("/{requestId}")
+  @PostMapping("{requestId}")
   public UUID assign(
           @PathVariable UUID requestId,
           @RequestParam(required = false, defaultValue = "WEIGHTED")
           @Pattern(
                   regexp = "^(WEIGHTED|SLA|WORKLOAD)$",
-                  message = "Стратегия: WEIGHTED, SLA или WORKLOAD")
-          String strategy
+                  message = "Стратегия: WEIGHTED, SLA или WORKLOAD"
+          ) String strategy
   ) {
     return assignmentService.assign(requestId, strategy);
   }
