@@ -12,11 +12,13 @@ public class WeightedStrategyConfig {
   private double loadWeight;
   private double performanceWeight;
   private double slaPressureWeight;
+  private double weightSum;
+  private double eps;
 
   @PostConstruct
   public void validate() {
     double sum = loadWeight + performanceWeight + slaPressureWeight;
-    if (Math.abs(sum - 1.0) > 0.001) {
+    if (Math.abs(sum - weightSum) > eps) {
       throw new IllegalStateException("Некорректные значения весов, сумма должна быть равна 1, текущая: " + sum);
     }
   }

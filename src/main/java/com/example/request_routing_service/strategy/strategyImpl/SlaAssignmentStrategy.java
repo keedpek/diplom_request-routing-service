@@ -9,6 +9,10 @@ import java.util.List;
 
 @Component("SLA")
 public class SlaAssignmentStrategy implements AssignmentStrategy {
+  private final double MIN_RISK = 1.0;
+  private final double MAX_RISK = 5.0;
+  private final double MAX_SUCCESS_RATE = 1.0;
+
   @Override
   public Executor assign(List<Executor> candidates, double slaPressure) {
     return candidates.stream()
@@ -18,7 +22,7 @@ public class SlaAssignmentStrategy implements AssignmentStrategy {
 
   private double eta(Executor candidate, double slaPressure) {
     double base = candidate.getWorkLoad();
-    double risk = 1 + (1 - candidate.getSuccessRate());
+    double risk = MIN_RISK + (MAX_SUCCESS_RATE - candidate.getSuccessRate()) * (MAX_RISK - MIN_RISK);
     return base * risk * slaPressure;
   }
 }

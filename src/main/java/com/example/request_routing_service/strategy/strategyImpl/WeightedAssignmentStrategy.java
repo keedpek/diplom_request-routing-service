@@ -12,6 +12,7 @@ import java.util.List;
 @Component("WEIGHTED")
 @RequiredArgsConstructor
 public class WeightedAssignmentStrategy implements AssignmentStrategy {
+  private final double MAX_SUCCESS_RATE = 1.0;
 
   private final WeightedStrategyConfig config;
 
@@ -22,10 +23,9 @@ public class WeightedAssignmentStrategy implements AssignmentStrategy {
             .orElseThrow(() -> new RuntimeException("Что-то пошло не так"));
   }
 
-  //TODO: mb skill diff
   private double calculateScore(Executor candidate, double slaPressure) {
     double load = candidate.getWorkLoad();
-    double performance = 1 - candidate.getSuccessRate();
+    double performance = MAX_SUCCESS_RATE - candidate.getSuccessRate();
 
     return load * config.getLoadWeight() + performance * config.getPerformanceWeight() + slaPressure * config.getSlaPressureWeight();
   }

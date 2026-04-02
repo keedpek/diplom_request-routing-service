@@ -2,6 +2,9 @@ server:
   port: 8084
 
 spring:
+  application:
+    name: request-routing-service
+
   datasource:
     url: jdbc:postgresql://localhost:5432/request_system
     username: postgres
@@ -29,3 +32,5 @@ app:
       load-weight: 0.5
       performance-weight: 0.3
       sla-pressure-weight: 0.2
+      weight-sum: 1.0
+      eps: 0.001

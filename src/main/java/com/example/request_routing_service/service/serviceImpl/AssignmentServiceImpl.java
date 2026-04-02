@@ -1,5 +1,6 @@
 package com.example.request_routing_service.service.serviceImpl;
 
+import com.example.request_routing_service.DTO.AssignRequestDto;
 import com.example.request_routing_service.exceptions.NotFoundException;
 import com.example.request_routing_service.model.Executor;
 import com.example.request_routing_service.projection.CandidateProjection;
@@ -26,6 +27,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AssignmentServiceImpl implements AssignmentService {
 
+  private final double MIN_SLA_PRESSURE = 0.1;
+  private final double MAX_SLA_PRESSURE = 10.0;
+
   private final RequestRepository requestRepository;
   private final AssignmentQueryRepository assignmentQueryRepository;
   private final MetricsRepository metricsRepository;
@@ -34,7 +38,7 @@ public class AssignmentServiceImpl implements AssignmentService {
 
   @Override
   @Transactional
-  public UUID assign(UUID requestId, String strategyType) {
+  public UUID assign(UUID requestId, AssignRequestDto assignRequestDto) {
     RequestProjection request = requestRepository.findRequestById(requestId).orElseThrow(() -> new NotFoundException("Запрос не найден"));
 
     List<Short> departments = assignmentQueryRepository.findDepartmentsByCategory(request.getCategoryId());
@@ -67,7 +71,7 @@ public class AssignmentServiceImpl implements AssignmentService {
             .map(c -> enrichWithMetrics(c, loadMap, successMap))
             .toList();
 
-    AssignmentStrategy strategy = resolver.getStrategy(strategyType);
+    AssignmentStrategy strategy = resolver.getStrategy(assignRequestDto.getStrategy().toUpperCase());
     return strategy.assign(candidates, slaPressure).getUserId();
   }
 
@@ -88,9 +92,9 @@ public class AssignmentServiceImpl implements AssignmentService {
   }
 
   private double calculateSlaPressure(LocalDateTime deadline, int slaTime) {
-    if (deadline == null) return 0.1;
+    if (deadline == null) return MIN_SLA_PRESSURE;
     long minutesUntilDeadline = Duration.between(LocalDateTime.now(), deadline).toMinutes();
-    if (minutesUntilDeadline <= 0) return 10;
+    if (minutesUntilDeadline <= 0) return MAX_SLA_PRESSURE;
     return (double) slaTime / minutesUntilDeadline;
   }
 }
