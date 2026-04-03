@@ -11,12 +11,14 @@ import com.example.request_routing_service.service.AssignmentService;
 import com.example.request_routing_service.strategy.AssignmentStrategy;
 import com.example.request_routing_service.strategy.StrategyResolver;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AssignmentServiceImpl implements AssignmentService {
@@ -30,21 +32,35 @@ public class AssignmentServiceImpl implements AssignmentService {
 
   @Override
   public UUID assign(UUID requestId, AssignRequestDto assignRequestDto) {
+    log.info(
+            "Начало назначения: requestId={}, strategy={}",
+            requestId,
+            assignRequestDto.getStrategy()
+    );
+
     RequestDto requestDto = assignmentJdbcRepository.findRequestById(requestId);
-    if (requestDto == null) { throw new NotFoundException("Запрос не найден"); }
+    if (requestDto == null) {
+      log.warn("Заявка не найдена: requestId={}", requestId);
+      throw new NotFoundException("Заявка не найдена");
+    }
 
     List<ExecutorDto> candidates = assignmentJdbcRepository.findCandidatesWithMetrics(requestDto.getCategoryId());
 
     if(candidates == null || candidates.isEmpty()) {
+      log.warn("Нет кандидатов: categoryId={}", requestDto.getCategoryId());
       throw new NotFoundException("Нет подходящих кандидатов");
     }
+    log.debug("Найдено кандидатов: count={}", candidates.size());
 
     double slaPressure = calculateSlaPressure(requestDto.getDeadline());
+    log.debug("SLA pressure: {}", slaPressure);
 
     List<Executor> executors = candidates.stream().map(executorMapper::toEntity).toList();
 
     AssignmentStrategy strategy = resolver.getStrategy(assignRequestDto.getStrategy().toUpperCase());
-    return strategy.assign(executors, slaPressure).getUserId();
+    UUID executorId = strategy.assign(executors, slaPressure).getUserId();
+    log.info("Назначен исполнитель: requestId={}, executorId={}", requestId, executorId);
+    return executorId;
   }
 
   private double calculateSlaPressure(LocalDateTime deadline) {
