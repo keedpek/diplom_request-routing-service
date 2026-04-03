@@ -1,4 +1,4 @@
-package com.example.request_routing_service.model;
+package com.example.request_routing_service.DTO;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,16 +9,10 @@ import java.util.UUID;
 @Data
 @Builder
 @AllArgsConstructor
-public class Executor {
-  private final double MAX_SUCCESS_RATE = 1.0;
-
+public class ExecutorDto {
   private UUID userId;
   private String name;
   private int workLoad;
   private double successRate;
   private double avgTaskTime;
-
-  public double getFailureRate() {
-    return MAX_SUCCESS_RATE - successRate;
-  }
 }

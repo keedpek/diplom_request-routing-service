@@ -12,8 +12,6 @@ import java.util.List;
 @Component("WEIGHTED")
 @RequiredArgsConstructor
 public class WeightedAssignmentStrategy implements AssignmentStrategy {
-  private final double MAX_SUCCESS_RATE = 1.0;
-
   private final WeightedStrategyConfig config;
 
   @Override
@@ -25,7 +23,7 @@ public class WeightedAssignmentStrategy implements AssignmentStrategy {
 
   private double calculateScore(Executor candidate, double slaPressure) {
     double load = candidate.getWorkLoad();
-    double performance = MAX_SUCCESS_RATE - candidate.getSuccessRate();
+    double performance = candidate.getFailureRate();
 
     return load * config.getLoadWeight() + performance * config.getPerformanceWeight() + slaPressure * config.getSlaPressureWeight();
   }

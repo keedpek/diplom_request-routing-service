@@ -1,100 +1,56 @@
 package com.example.request_routing_service.service.serviceImpl;
 
 import com.example.request_routing_service.DTO.AssignRequestDto;
+import com.example.request_routing_service.DTO.ExecutorDto;
+import com.example.request_routing_service.DTO.RequestDto;
 import com.example.request_routing_service.exceptions.NotFoundException;
+import com.example.request_routing_service.mapper.ExecutorMapper;
 import com.example.request_routing_service.model.Executor;
-import com.example.request_routing_service.projection.CandidateProjection;
-import com.example.request_routing_service.projection.LoadProjection;
-import com.example.request_routing_service.projection.RequestProjection;
-import com.example.request_routing_service.projection.SuccessRateProjection;
-import com.example.request_routing_service.repository.AssignmentQueryRepository;
-import com.example.request_routing_service.repository.MetricsRepository;
-import com.example.request_routing_service.repository.RequestRepository;
-import com.example.request_routing_service.repository.SlaRepository;
+import com.example.request_routing_service.repository.AssignmentJdbcRepository;
 import com.example.request_routing_service.service.AssignmentService;
 import com.example.request_routing_service.strategy.AssignmentStrategy;
 import com.example.request_routing_service.strategy.StrategyResolver;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class AssignmentServiceImpl implements AssignmentService {
 
   private final double MIN_SLA_PRESSURE = 0.1;
-  private final double MAX_SLA_PRESSURE = 10.0;
+  private final double MAX_SLA_PRESSURE = 1.0;
 
-  private final RequestRepository requestRepository;
-  private final AssignmentQueryRepository assignmentQueryRepository;
-  private final MetricsRepository metricsRepository;
-  private final SlaRepository slaRepository;
+  private final AssignmentJdbcRepository assignmentJdbcRepository;
   private final StrategyResolver resolver;
+  private final ExecutorMapper executorMapper;
 
   @Override
-  @Transactional
   public UUID assign(UUID requestId, AssignRequestDto assignRequestDto) {
-    RequestProjection request = requestRepository.findRequestById(requestId).orElseThrow(() -> new NotFoundException("Запрос не найден"));
+    RequestDto requestDto = assignmentJdbcRepository.findRequestById(requestId);
+    if (requestDto == null) { throw new NotFoundException("Запрос не найден"); }
 
-    List<Short> departments = assignmentQueryRepository.findDepartmentsByCategory(request.getCategoryId());
+    List<ExecutorDto> candidates = assignmentJdbcRepository.findCandidatesWithMetrics(requestDto.getCategoryId());
 
-    List<CandidateProjection> departmentCandidates = assignmentQueryRepository.findCandidates(departments);
-
-    if(departmentCandidates == null || departmentCandidates.isEmpty()) {
+    if(candidates == null || candidates.isEmpty()) {
       throw new NotFoundException("Нет подходящих кандидатов");
     }
 
-    Map<UUID, Integer> loadMap = metricsRepository.getCandidatesLoad().stream()
-            .collect(Collectors.toMap(
-                    LoadProjection::getUserId,
-                    LoadProjection::getLoad
-            ));
+    double slaPressure = calculateSlaPressure(requestDto.getDeadline());
 
-    Map<UUID, Double> successMap = metricsRepository.getSuccessRate().stream()
-            .collect(Collectors.toMap(
-                    SuccessRateProjection::getUserId,
-                    SuccessRateProjection::getSuccessRate
-            ));
-
-    int slaTime = slaRepository.getExecutionTime(
-            request.getCategoryId(),
-            request.getPriority()
-    );
-    double slaPressure = calculateSlaPressure(request.getDeadline(), slaTime);
-
-    List<Executor> candidates = departmentCandidates.stream()
-            .map(c -> enrichWithMetrics(c, loadMap, successMap))
-            .toList();
+    List<Executor> executors = candidates.stream().map(executorMapper::toEntity).toList();
 
     AssignmentStrategy strategy = resolver.getStrategy(assignRequestDto.getStrategy().toUpperCase());
-    return strategy.assign(candidates, slaPressure).getUserId();
+    return strategy.assign(executors, slaPressure).getUserId();
   }
 
-  private Executor enrichWithMetrics(
-          CandidateProjection candidate,
-          Map<UUID, Integer> loadMap,
-          Map<UUID, Double> successMap
-  ) {
-    int workload = loadMap.getOrDefault(candidate.getUserId(), 0);
-    Double successRate = successMap.getOrDefault(candidate.getUserId(), 0.8);
-
-    return Executor.builder()
-            .userId(candidate.getUserId())
-            .name(candidate.getFirstName() + " " + candidate.getLastName())
-            .workLoad(workload)
-            .successRate(successRate)
-            .build();
-  }
-
-  private double calculateSlaPressure(LocalDateTime deadline, int slaTime) {
+  private double calculateSlaPressure(LocalDateTime deadline) {
     if (deadline == null) return MIN_SLA_PRESSURE;
     long minutesUntilDeadline = Duration.between(LocalDateTime.now(), deadline).toMinutes();
     if (minutesUntilDeadline <= 0) return MAX_SLA_PRESSURE;
-    return (double) slaTime / minutesUntilDeadline;
+    return 1.0 / minutesUntilDeadline;
   }
 }
