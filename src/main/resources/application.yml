@@ -26,3 +26,12 @@ app:
       sla-pressure-weight: 0.2
       weight-sum: 1.0
       eps: 0.001
+
+logging:
+  level:
+    root: info
+    com.example: debug
+    org.springframework: warn
+
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
