@@ -10,6 +10,7 @@ import com.example.request_routing_service.repository.AssignmentJdbcRepository;
 import com.example.request_routing_service.service.AssignmentService;
 import com.example.request_routing_service.strategy.AssignmentStrategy;
 import com.example.request_routing_service.strategy.StrategyResolver;
+import com.example.request_routing_service.util.AssignmentConstants;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,9 +23,6 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 public class AssignmentServiceImpl implements AssignmentService {
-
-  private final double MIN_SLA_PRESSURE = 0.1;
-  private final double MAX_SLA_PRESSURE = 1.0;
 
   private final AssignmentJdbcRepository assignmentJdbcRepository;
   private final StrategyResolver resolver;
@@ -64,9 +62,9 @@ public class AssignmentServiceImpl implements AssignmentService {
   }
 
   private double calculateSlaPressure(LocalDateTime deadline) {
-    if (deadline == null) return MIN_SLA_PRESSURE;
+    if (deadline == null) return AssignmentConstants.MIN_SLA_PRESSURE;
     long minutesUntilDeadline = Duration.between(LocalDateTime.now(), deadline).toMinutes();
-    if (minutesUntilDeadline <= 0) return MAX_SLA_PRESSURE;
+    if (minutesUntilDeadline <= 0) return AssignmentConstants.MAX_SLA_PRESSURE;
     return 1.0 / minutesUntilDeadline;
   }
 }

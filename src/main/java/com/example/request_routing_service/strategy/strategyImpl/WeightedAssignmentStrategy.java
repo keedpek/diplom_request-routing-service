@@ -1,6 +1,7 @@
 package com.example.request_routing_service.strategy.strategyImpl;
 
 import com.example.request_routing_service.config.WeightedStrategyConfig;
+import com.example.request_routing_service.exceptions.AssignmentException;
 import com.example.request_routing_service.model.Executor;
 import com.example.request_routing_service.strategy.AssignmentStrategy;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,7 @@ public class WeightedAssignmentStrategy implements AssignmentStrategy {
   public Executor assign(List<Executor> candidates, double slaPressure) {
     return candidates.stream()
             .min(Comparator.comparing(c -> calculateScore(c, slaPressure)))
-            .orElseThrow(() -> new RuntimeException("Что-то пошло не так"));
+            .orElseThrow(() -> new AssignmentException("Не удалось назначить исполнителя"));
   }
 
   private double calculateScore(Executor candidate, double slaPressure) {
