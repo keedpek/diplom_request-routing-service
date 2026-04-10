@@ -17,7 +17,7 @@ public class AssignmentController {
   @PostMapping("/{requestId}")
   public UUID assign(
           @PathVariable UUID requestId,
-          @Valid @RequestParam(required = false, defaultValue = "WEIGHTED") AssignRequestDto assignRequestDto
+          @Valid @RequestBody(required = false) AssignRequestDto assignRequestDto
   ) {
     return assignmentService.assign(requestId, assignRequestDto);
   }

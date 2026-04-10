@@ -30,10 +30,11 @@ public class AssignmentServiceImpl implements AssignmentService {
 
   @Override
   public UUID assign(UUID requestId, AssignRequestDto assignRequestDto) {
+    String strategyTitle = assignRequestDto != null ? assignRequestDto.getStrategy() : "WEIGHTED";
     log.info(
             "Начало назначения: requestId={}, strategy={}",
             requestId,
-            assignRequestDto.getStrategy()
+            strategyTitle
     );
 
     RequestDto requestDto = assignmentJdbcRepository.findRequestById(requestId);
@@ -55,7 +56,7 @@ public class AssignmentServiceImpl implements AssignmentService {
 
     List<Executor> executors = candidates.stream().map(executorMapper::toEntity).toList();
 
-    AssignmentStrategy strategy = resolver.getStrategy(assignRequestDto.getStrategy().toUpperCase());
+    AssignmentStrategy strategy = resolver.getStrategy(strategyTitle.toUpperCase());
     UUID executorId = strategy.assign(executors, slaPressure).getUserId();
     log.info("Назначен исполнитель: requestId={}, executorId={}", requestId, executorId);
     return executorId;
