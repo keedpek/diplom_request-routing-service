@@ -2,6 +2,8 @@ server:
   port: 8084
 
 spring:
+  application:
+    name: request-routing-service
 
   datasource:
     url: jdbc:postgresql://localhost:5432/request_system
@@ -9,14 +11,27 @@ spring:
     password: postgres
     driver-class-name: org.postgresql.Driver
 
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-
   flyway:
     enabled: true
     locations: classpath:db/migration
+    table: flyway_schema_history_routing
+    baseline-on-migrate: true
+    baseline-version: 0
+
+app:
+  strategies-weights:
+    weighted:
+      load-weight: 0.5
+      performance-weight: 0.3
+      sla-pressure-weight: 0.2
+      weight-sum: 1.0
+      eps: 0.001
+
+logging:
+  level:
+    root: info
+    com.example: debug
+    org.springframework: warn
+
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
