@@ -15,4 +15,5 @@ public class RequestDto {
   Short categoryId;
   String priority;
   LocalDateTime deadline;
+  UUID assignedToUserId;
 }

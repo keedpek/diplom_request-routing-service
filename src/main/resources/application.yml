@@ -18,6 +18,21 @@ spring:
     baseline-on-migrate: true
     baseline-version: 0
 
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      group-id: request-routing-service-group
+      properties:
+        spring.json.type.mapping: "com.example.request_service.messaging.event.EventDto:com.example.request_routing_service.messaging.event.EventDto"
+        spring.json.trusted.packages: "com.example.request_service.messaging.event"
+    listener:
+      ack-mode: manual
+
 app:
   strategies-weights:
     weighted:

@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,7 +20,8 @@ public class AssignmentJdbcRepository {
               r.id,
               r.category_id,
               r.priority,
-              r.deadline
+              r.deadline,
+              r.assigned_to_user_id
             FROM requests r
             WHERE r.id = ?
             """;
@@ -32,7 +32,8 @@ public class AssignmentJdbcRepository {
             rs.getString("priority"),
             rs.getTimestamp("deadline") != null
                     ? rs.getTimestamp("deadline").toLocalDateTime()
-                    : null
+                    : null,
+            rs.getObject("assigned_to_user_id", UUID.class)
     ), requestId);
   }
 
