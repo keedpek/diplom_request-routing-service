@@ -12,7 +12,7 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ExecutorFoundEventDto {
+public class ExecutorFoundEventDto implements EventDtoPayload{
   @NotNull(message = "Идентификатор заявки обязателен")
   private UUID requestId;
 

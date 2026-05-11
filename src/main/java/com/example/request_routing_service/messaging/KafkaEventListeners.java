@@ -16,7 +16,7 @@ public class KafkaEventListeners {
 
   private final AssignmentService assignmentService;
 
-  @KafkaListener(topics = "request.created")
+  @KafkaListener(topics = "request-created")
   public void onRequestCreated(
           EventDto<RequestCreatedEventDto> event,
           Acknowledgment acknowledgment

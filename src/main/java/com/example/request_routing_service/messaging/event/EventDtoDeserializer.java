@@ -12,15 +12,15 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public class EventDtoDeserializer extends JsonDeserializer<EventDto<?>> {
+public class EventDtoDeserializer extends JsonDeserializer<EventDto<? extends EventDtoPayload>> {
 
   @Override
-  public EventDto<?> deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JacksonException {
+  public EventDto<? extends EventDtoPayload> deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JacksonException {
     ObjectNode node = jsonParser.readValueAsTree();
     String eventType = node.get("eventType").asText();
     ObjectNode payload = (ObjectNode) node.get("payload");
 
-    Class<?> payloadClass = switch (eventType) {
+    Class<? extends EventDtoPayload> payloadClass = switch (eventType) {
       case "REQUEST_CREATED" -> RequestCreatedEventDto.class;
       case "EXECUTOR_FOUND" -> ExecutorFoundEventDto.class;
       case "REQUEST_ASSIGNED" -> RequestAssignedEventDto.class;
@@ -30,10 +30,10 @@ public class EventDtoDeserializer extends JsonDeserializer<EventDto<?>> {
       default -> throw new IllegalArgumentException("Некорректный event type: " + eventType);
     };
 
-    Object payloadObject = deserializationContext.readTreeAsValue(payload, payloadClass);
+    EventDtoPayload payloadObject = deserializationContext.readTreeAsValue(payload, payloadClass);
     LocalDateTime timestamp = deserializationContext.readTreeAsValue(node.get("timestamp"), LocalDateTime.class);
 
-    return EventDto.builder()
+    return EventDto.<EventDtoPayload>builder()
             .eventId(UUID.fromString(node.get("eventId").asText()))
             .eventType(EventType.valueOf(eventType))
             .timestamp(timestamp)

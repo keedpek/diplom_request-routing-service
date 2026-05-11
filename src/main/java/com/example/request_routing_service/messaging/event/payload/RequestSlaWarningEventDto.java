@@ -16,7 +16,7 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RequestSlaWarningEventDto {
+public class RequestSlaWarningEventDto implements EventDtoPayload{
 
   @NotNull(message = "Идентификатор заявки обязателен")
   private UUID requestId;

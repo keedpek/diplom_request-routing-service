@@ -77,7 +77,7 @@ public class AssignmentServiceImpl implements AssignmentService {
                     .assignedUserId(executorId)
                     .build())
             .build();
-    kafkaTemplate.send("request.executor.found", event);
+    kafkaTemplate.send("request-executor-found", event);
     return executorId;
   }
 
